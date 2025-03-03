@@ -186,6 +186,8 @@ class ConvIntrinsic(ABC, nn.Module):
             Weighted and interpolated mesh signals
         """
         interpolations = self._signal_retrieval(mesh_signal, barycentric_coordinates)
+        if interpolations.dtype != self._kernel.dtype:
+            interpolations = interpolations.float()
 
         if self.include_prior:
             # Weight matrix  : (radial, angular, radial, angular)
@@ -216,7 +218,9 @@ class ConvIntrinsic(ABC, nn.Module):
 
     def _configure_kernel(self):
         """Defines all necessary interpolation coefficient matrices for the patch operator."""
-        self._kernel = torch.tensor(self.define_kernel_values(self._template_vertices.numpy()).astype(np.float32))
+        # self._kernel = torch.tensor(self.define_kernel_values(self._template_vertices.numpy()).astype(np.float32))
+        v = torch.tensor(self.define_kernel_values(self._template_vertices.numpy()).astype(np.float32))
+        self._kernel = nn.Parameter(v, requires_grad=False)
 
     @abstractmethod
     def define_kernel_values(self, template_matrix):
